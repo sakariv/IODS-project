@@ -8,10 +8,10 @@ output:
 
 ## Thoughts about the IODS course
 
-I am feeling slightly nervous about the course and the fast pace of it. I have used **R** very little and am hoping to get a better idea how to use it in practice. Before the excersices, I had no idea what **Markdown** and **GitHub** even were. I have used **SPSS** for statistical analysis, and it feels sometimes a bit clumsy and "heavy", whereas in my understanding R is more flexible. I minored in *chemistry* instead of *statistics*, and I sometimes regret my choice. Statistics would certainly have been very useful in my research work, as better understanding would give better confidence in the analysis of the results. I have also read a couple of popular data science books and found them very interesting. I learned about this course from the doctoral program email list. 
+I am feeling slightly nervous about the course and the fast pace of it. I have used **R** very little and am hoping to get a better idea how to use it in practice. Before the excersices, I had no idea what **Markdown** and **GitHub** even were. I have used **SPSS** for statistical analysis, and it feels sometimes a bit clumsy and "heavy", whereas in my understanding R is more flexible. I minored in *chemistry* instead of *statistics*, and I sometimes regret my choice. Statistics would certainly have been very useful in my research work, as better understanding would give better confidence in the analysis of the results. I have also read a couple of popular data science books and found them very interesting. I learned about this course from the doctoral program email list.
 
 ## R for Health Data Science: Excerise Set 1
-I had some basic understanding on how R works from a previous introductory course. The exercises were fist rather confusing to follow but I got a hang of it. I struggled a bit at the end of chapter 3, chapter 4 about the plots was easier to understand as the changes in code were visually represented in the makeup of the plots.  
+I had some basic understanding on how R works from a previous introductory course. The exercises were fist rather confusing to follow but I got a hang of it. I struggled a bit at the end of chapter 3, chapter 4 about the plots was easier to understand as the changes in code were visually represented in the makeup of the plots.
 
 ## Link to my R repository
 https://github.com/sakariv/IODS-project
