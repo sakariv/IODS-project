@@ -1,4 +1,4 @@
-# Insert chapter 2 title here
+# Regression and model validation
 
 *Describe the work you have done this week and summarize your learning.*
 
@@ -6,8 +6,107 @@
 - Assume the reader has an introductory course level understanding of writing and reading R code as well as statistical methods.
 - Assume the reader has no previous knowledge of your data or the more advanced methods you are using.
 
+## Data wrangling
+
+A link to my R script in the GitHub repository:
+
+
+## Importing and exploring the data
+
+KYSYMYS Read the students2014 data into R either from your local folder (if you completed the Data wrangling part) or from this url: https://raw.githubusercontent.com/KimmoVehkalahti/Helsinki-Open-Data-Science/master/datasets/learning2014.txt . (The separator is a comma "," and the file includes a header). Explore the structure and the dimensions of the data and describe the dataset briefly, assuming the reader has no previous knowledge of it. There is information related to the data here. (0-2 points)
+
+The data has information on student scores and variables relating to them. The data set has been wrangled from a survey data
+
+* combined variables
+* dimensions
+* structure
+
 ```{r}
-date()
+# Reading the data from the local folder:
+library(readr)
+learning2014 <- read_csv("data/learning2014.csv")
+
+# Exploration of the structure and the dimensions of the data
+str(learning2014)
+dim(learning2014)
+```
+## Graphical overview of the data
+
+Show a graphical overview of the data and show summaries of the variables in the data. Describe and interpret the outputs, commenting on the distributions of the variables and the relationships between them.
+
+* Significant correlations
+* Age is quite young as would be expected from students
+* Gender bit different variable 
++ How do I see which is male and which female
+
+Linear regression modelling has four main assumptions:
+
+Linear relationship between predictors and outcome;
+Independence of residuals;
+Normal distribution of residuals;
+Equal variance of residuals.
+
+
+```{r}
+summary(learning2014)
+library(GGally)
+library(ggplot2)
+library(tidyverse)
+library(gapminder)
+library(finalfit)
+library(broom)
+
+ggpairs(learning2014, mapping = aes(), lower = list(combo = wrap("facethist", bins = 20)))
+
+glimpse(learning2014)
+missing_glimpse(learning2014)
+ff_glimpse(learning2014)
 ```
 
-Here we go again...
+## Variables and a regression model
+
+Choose three variables as explanatory variables and fit a regression model where exam points is the target (dependent, outcome) variable. Show a summary of the fitted model and comment and interpret the results. Explain and interpret the statistical test related to the model parameters. If an explanatory variable in your model does not have a statistically significant relationship with the target variable, remove the variable from the model and fit the model again without it.
+
+The explanatory variables chosen for the model:
+
+* attitude
+* stra
+* surf
+
+Only the variable "attitude" had statistically significant relationship with the dependent variable points. Therefore, only it was left in the final model
+
+```{r}
+# create a regression model with multiple explanatory variables
+
+lrn2014_model <- lm(points ~ attitude + stra + surf, data = learning2014)
+
+summary(lrn2014_model)
+
+# only "attitude" has significant correlation with the dependent variable "points"
+
+lrn2014_model_adjusted <- lm(points ~ attitude, data = learning2014)
+
+summary(lrn2014_model_adjusted)
+
+```
+
+
+
+## Summary of the fitted model
+
+Using a summary of your fitted model, explain the relationship between the chosen explanatory variables and the target variable (interpret the model parameters). Explain and interpret the multiple R-squared of the model. (0-3 points)
+
+```{r}
+summary(lrn2014_model_adjusted)
+```
+
+
+## Diagnostic plots
+
+Produce the following diagnostic plots: Residuals vs Fitted values, Normal QQ-plot and Residuals vs Leverage. Explain the assumptions of the model and interpret the validity of those assumptions based on the diagnostic plots. (0-3 points)
+
+```{r}
+
+plot(lrn2014_model_adjusted, which = c(1,2,5))
+
+```
