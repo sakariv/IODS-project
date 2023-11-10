@@ -3,7 +3,7 @@
 # The original data:
 lrn14 <- read.table("http://www.helsinki.fi/~kvehkala/JYTmooc/JYTOPKYS3-data.txt", sep="\t", header=TRUE)
 
-# The learning14 dataset contains integer and character variables
+# The learning14 dataset contains integer and character variables.
 str(lrn14)
 # The learning14 dataset contains 183 observations and 60 variables.
 dim(lrn14)
@@ -41,6 +41,6 @@ library(readr)
 write_csv(x = learning2014, "data/learning2014.csv")
 learningdata2014 <- read_csv("data/learning2014.csv")
 
-# ensuring the data appears correct
+# ensuring that the data appears correct
 str(learningdata2014)
 head(learningdata2014)
