@@ -42,7 +42,7 @@ dim(learning2014)
 library(readr)
 write_csv(x = learning2014, "data/learning2014.csv")
 
-# reading the data back
+# reading the data back 
 learningdata2014 <- read_csv("data/learning2014.csv")
 
 # ensuring that the data appears correct
