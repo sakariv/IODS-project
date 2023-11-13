@@ -3,9 +3,9 @@
 # The original data:
 lrn14 <- read.table("http://www.helsinki.fi/~kvehkala/JYTmooc/JYTOPKYS3-data.txt", sep="\t", header=TRUE)
 
-# The learning14 dataset contains integer and character variables.
+# The learning14 data set contains integer and character variables.
 str(lrn14)
-# The learning14 dataset contains 183 observations and 60 variables.
+# The learning14 data set contains 183 observations and 60 variables.
 dim(lrn14)
 
 # Scaling the data by dividing it with the number of questions
@@ -27,6 +27,8 @@ learning2014 <- filter(lrn14, Points > 0)
 
 # selecting the variables for learning2014 dataset
 learning2014 <- learning2014[, c("gender","Age","attitude", "deep", "stra", "surf", "Points")]
+
+# changing the names to no caps
 colnames(learning2014)[2] <- "age"
 colnames(learning2014)[7] <- "points"
 
@@ -39,6 +41,8 @@ dim(learning2014)
 # saving the data as .csv
 library(readr)
 write_csv(x = learning2014, "data/learning2014.csv")
+
+# reading the data back
 learningdata2014 <- read_csv("data/learning2014.csv")
 
 # ensuring that the data appears correct

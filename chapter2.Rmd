@@ -1,111 +1,168 @@
 # Regression and model validation
 
-*Describe the work you have done this week and summarize your learning.*
+## Week 2: learning 
 
-- Assume the reader has an introductory course level understanding of writing and reading R code as well as statistical methods.
-- Assume the reader has no previous knowledge of your data or the more advanced methods you are using.
+* Using R is quite new to me, so lot of new stuff...
+* I studied simple regression from chapter 7 in  "R for Data Science" and by doing the Exercise 2
+* I learned some more R markdown syntax while writing Chapter 2
+
+* Assignment 2
+  + Data wrangling: importing the data and arranging it based on Exercise 2
+  + Data analysis: Based on Excercise 2 and chapter 7 in  "R for Data Science"
+
+Note: if I work from home with work computer, I need to have VPN on in order to push to github. Otherwise I get a proxy error
 
 ## Data wrangling
 
 A link to my R script in the GitHub repository:
+https://github.com/sakariv/IODS-project/blob/master/data/create_learning2014.R
 
+## Data analysis 
 
-## Importing and exploring the data
-
-KYSYMYS Read the students2014 data into R either from your local folder (if you completed the Data wrangling part) or from this url: https://raw.githubusercontent.com/KimmoVehkalahti/Helsinki-Open-Data-Science/master/datasets/learning2014.txt . (The separator is a comma "," and the file includes a header). Explore the structure and the dimensions of the data and describe the dataset briefly, assuming the reader has no previous knowledge of it. There is information related to the data here. (0-2 points)
-
-The data has information on student scores and variables relating to them. The data set has been wrangled from a survey data
-
-* combined variables
-* dimensions
-* structure
+### Importing and exploring the data
 
 ```{r}
-# Reading the data from the local folder:
+# Reading the data from local folder:
 library(readr)
 learning2014 <- read_csv("data/learning2014.csv")
 
-# Exploration of the structure and the dimensions of the data
+# Exploration of the structure the data
 str(learning2014)
+
+# Exploration of the dimensions of the data
 dim(learning2014)
 ```
-## Graphical overview of the data
+Description of the data set:
 
-Show a graphical overview of the data and show summaries of the variables in the data. Describe and interpret the outputs, commenting on the distributions of the variables and the relationships between them.
+* The 'learning2014' data set has 166 observations.
 
-* Significant correlations
-* Age is quite young as would be expected from students
-* Gender bit different variable 
-+ How do I see which is male and which female
+* The data set is comprised of answers of student survey, some background information ('gender', 'age') and their course performance ('points'). In data wrangling, the number of variables was reduced from from 60 to 7. 
 
-Linear regression modelling has four main assumptions:
+* In the wrangled data the variable "attitude" was left as such and the following combination variables were created: 
 
-Linear relationship between predictors and outcome;
-Independence of residuals;
-Normal distribution of residuals;
-Equal variance of residuals.
+  + 'deep', questions related to deep learning
+  + 'stra', questions related to strategic learning
+  + 'surf', questions related to surface level learning
 
+* The observations where "points" was 0 were removed from the dataset.
+
+### Summary of the data
 
 ```{r}
+# Overview of the data
+
 summary(learning2014)
+
+# Summary of gender distribution
+
+table(learning2014$gender)
+
+```
+* The summary shows that the 'age' of the participants is skewed to lower side, which makes sense for student survey data. 
+
+* The summary does not show data on character variable 'gender', but with 'table' function it was possible to see that there are almost double the amount of female students than male students represented in the data.
+
+### Graphical overview of the data
+
+```{r}
+# accessing the necessary packages for plotting the data
+
 library(GGally)
 library(ggplot2)
 library(tidyverse)
-library(gapminder)
-library(finalfit)
-library(broom)
+
+# plotting the graphical overview of the data
 
 ggpairs(learning2014, mapping = aes(), lower = list(combo = wrap("facethist", bins = 20)))
-
-glimpse(learning2014)
-missing_glimpse(learning2014)
-ff_glimpse(learning2014)
 ```
 
-## Variables and a regression model
+* Based on the plotted data there are following significant correlations:
 
-Choose three variables as explanatory variables and fit a regression model where exam points is the target (dependent, outcome) variable. Show a summary of the fitted model and comment and interpret the results. Explain and interpret the statistical test related to the model parameters. If an explanatory variable in your model does not have a statistically significant relationship with the target variable, remove the variable from the model and fit the model again without it.
+  + surface level learning ('surf') is negatively correlated with 'attitude', deep learning ('deep'), and strategic learning ('stra')
+  + points is positively correlated with 'attitude' 
 
-The explanatory variables chosen for the model:
+* Other than 'age', the distributions of variables don't seem terribly skewed from normal distribution.
 
-* attitude
-* stra
-* surf
+### Variables and a regression model
 
-Only the variable "attitude" had statistically significant relationship with the dependent variable points. Therefore, only it was left in the final model
+* The following explanatory variables were chosen for the model as they had the highest correlations with 'points' based on the plotted data:
+
+  + 'attitude'
+  + 'stra'
+  + 'surf'
 
 ```{r}
-# create a regression model with multiple explanatory variables
+# creating a regression model with the variables attitude, stra and surf
 
 lrn2014_model <- lm(points ~ attitude + stra + surf, data = learning2014)
 
 summary(lrn2014_model)
 
-# only "attitude" has significant correlation with the dependent variable "points"
+```
+The intercept = 'points' when all explanatory variables are 0
+
+Slopes:
+
+  + Each point in 'attitude' improves the points by 3.4 in the model
+  + Each point in 'stra' improves the points by 0.9 in the model
+  + Each point in 'surf' decreases the points by 0.8 in the model
+
+* Based on the multiple R-squared, 21% of the variation of the dependent variables are explained by the chosen explanatory variables.
+
+* The F-statistic is statistically significant, meaning that at least one of the explanatory variables are contributing significatly to explaining the variablilty of the independent variable.
+
+## The new model
+
+Only the variable 'attitude' had statistically significant relationship (slope) with the dependent variable 'points'. Therefore, only it was left in the final model as an explanatory variable:
+```{r}
+# New model with only "attitude" the explanatory variable
 
 lrn2014_model_adjusted <- lm(points ~ attitude, data = learning2014)
 
+```
+
+Summary of the new model
+```{r}
+# Summary of the model with 'attitude' as the only explanatory variable
+
 summary(lrn2014_model_adjusted)
 
 ```
 
+* Now with attitude as the only explanatory variable in the model, based on the multiple R squared it explains 19% of the variation. This is a 2 percentage point drop from including 'surf' and 'stra', for which the correlation was not statistically significant
+* Intercept: The points when explanatory variable = 0
+  + based on the model, when explanatory variable 'attitude' = 0, 'points' = 11.6 
+* Slope: A 'points' increase by 3.5 for each point in 'attitude'
 
+### Diagnostic plots
 
-## Summary of the fitted model
+Linear regression model has the following assumptions:
 
-Using a summary of your fitted model, explain the relationship between the chosen explanatory variables and the target variable (interpret the model parameters). Explain and interpret the multiple R-squared of the model. (0-3 points)
-
+* Linear relationship between the predictor (explanatory variable) and outcome (dependent variable)
+* Independence of residuals
+  + the observations need to be independent from each other
+  + more often a problem in time series data
+  + some relationship in the data that is not identified by the model 
+* Normal distribution of residuals
+  + the residuals should show a normal distribution with a mean of zero
+* Equal variance of residuals
+  + the distance of the observations need to be the same on the both sides of the line
+  
 ```{r}
-summary(lrn2014_model_adjusted)
-```
-
-
-## Diagnostic plots
-
-Produce the following diagnostic plots: Residuals vs Fitted values, Normal QQ-plot and Residuals vs Leverage. Explain the assumptions of the model and interpret the validity of those assumptions based on the diagnostic plots. (0-3 points)
-
-```{r}
-
+# Creating the diagnostic plots for the model with 'points' as the dependent and 'attitude' as the explanatory variable 
 plot(lrn2014_model_adjusted, which = c(1,2,5))
 
 ```
+
+The diagnostic plots test the following assumptions:
+
+* The Residuals vs fitted plot tests for linearity and equal variances of the residuals
+  + The plot indicates linearity, as there is no apparent "arc" formed by the fitted values
+  + The plot indicates some unequal variances of the residuals, as they fan out slightly towards the left. This violates the assumptions of linear regression
+
+* The Q-Q plot tests for normality assumption
+  + The points fall to the line, which indicates normality
+
+* The Residuals vs Leverage plot tests for influential observations (outliers) in the model 
+  + The plot does not indicate outliers, as none of the observations are outside the Cook's distance lines
+  + The plot indicates unequal variances, which violates the assumptions of the linear regression model
