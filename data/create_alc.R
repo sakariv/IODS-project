@@ -15,7 +15,7 @@ por <- read.table("data/student-por.csv", sep = ";" , header = TRUE)
 str(por)
 dim(por)
 
-#Joining the data sets
+#Joining the data sets.
 
 library(dplyr)
 free_cols <- c("failures","paid","absences","G1","G2","G3")

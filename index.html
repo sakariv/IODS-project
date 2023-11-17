@@ -397,6 +397,18 @@ analysis</a></li>
 <li><a href="#the-new-model" id="toc-the-new-model">The new
 model</a></li>
 </ul></li>
+<li><a href="#logistic-regression" id="toc-logistic-regression">Logistic
+regression</a>
+<ul>
+<li><a href="#reading-the-joined-data-from-the-local-folder" id="toc-reading-the-joined-data-from-the-local-folder">Reading the
+joined data from the local folder</a></li>
+<li><a href="#exploration-of-the-data" id="toc-exploration-of-the-data">Exploration of the data</a></li>
+<li><a href="#choosing-the-variables" id="toc-choosing-the-variables">Choosing the variables</a></li>
+<li><a href="#hypothesis" id="toc-hypothesis">Hypothesis:</a></li>
+<li><a href="#exploration-of-the-variable-distributions" id="toc-exploration-of-the-variable-distributions">Exploration of the
+variable distributions</a></li>
+<li><a href="#statistical-analysis" id="toc-statistical-analysis">Statistical analysis</a></li>
+</ul></li>
 </ul>
 </div>
 
@@ -436,7 +448,7 @@ code were visually represented in the makeup of the plots.</p>
 <pre class="r"><code># This is a so-called &quot;R chunk&quot; where you can write R code.
 
 date()</code></pre>
-<pre><code>## [1] &quot;Mon Nov 13 16:18:05 2023&quot;</code></pre>
+<pre><code>## [1] &quot;Fri Nov 17 14:12:25 2023&quot;</code></pre>
 <p>The text continues here.</p>
 <hr />
 </div>
@@ -743,9 +755,129 @@ of the linear regression model</li>
 </ul></li>
 </ul>
 <hr />
+</div>
+</div>
+</div>
+<div id="logistic-regression" class="section level1">
+<h1>Logistic regression</h1>
+<div id="reading-the-joined-data-from-the-local-folder" class="section level2">
+<h2>Reading the joined data from the local folder</h2>
+<pre class="r"><code># reading the data from a local folder
+library(readr)
+alc &lt;- read.csv(&quot;data/joined_alc_data.csv&quot;)</code></pre>
+</div>
+<div id="exploration-of-the-data" class="section level2">
+<h2>Exploration of the data</h2>
+<p>Original data source: <a href="https://www.archive.ics.uci.edu/dataset/320/student+performance" class="uri">https://www.archive.ics.uci.edu/dataset/320/student+performance</a></p>
+<p>The data consist of information on secondary education student
+performance in Portugal. The data is joined from two data sets</p>
+<pre class="r"><code># Exploration of the data variables
+
+str(alc)</code></pre>
+<pre><code>## &#39;data.frame&#39;:    370 obs. of  35 variables:
+##  $ school    : chr  &quot;GP&quot; &quot;GP&quot; &quot;GP&quot; &quot;GP&quot; ...
+##  $ sex       : chr  &quot;F&quot; &quot;F&quot; &quot;F&quot; &quot;F&quot; ...
+##  $ age       : int  18 17 15 15 16 16 16 17 15 15 ...
+##  $ address   : chr  &quot;U&quot; &quot;U&quot; &quot;U&quot; &quot;U&quot; ...
+##  $ famsize   : chr  &quot;GT3&quot; &quot;GT3&quot; &quot;LE3&quot; &quot;GT3&quot; ...
+##  $ Pstatus   : chr  &quot;A&quot; &quot;T&quot; &quot;T&quot; &quot;T&quot; ...
+##  $ Medu      : int  4 1 1 4 3 4 2 4 3 3 ...
+##  $ Fedu      : int  4 1 1 2 3 3 2 4 2 4 ...
+##  $ Mjob      : chr  &quot;at_home&quot; &quot;at_home&quot; &quot;at_home&quot; &quot;health&quot; ...
+##  $ Fjob      : chr  &quot;teacher&quot; &quot;other&quot; &quot;other&quot; &quot;services&quot; ...
+##  $ reason    : chr  &quot;course&quot; &quot;course&quot; &quot;other&quot; &quot;home&quot; ...
+##  $ guardian  : chr  &quot;mother&quot; &quot;father&quot; &quot;mother&quot; &quot;mother&quot; ...
+##  $ traveltime: int  2 1 1 1 1 1 1 2 1 1 ...
+##  $ studytime : int  2 2 2 3 2 2 2 2 2 2 ...
+##  $ schoolsup : chr  &quot;yes&quot; &quot;no&quot; &quot;yes&quot; &quot;no&quot; ...
+##  $ famsup    : chr  &quot;no&quot; &quot;yes&quot; &quot;no&quot; &quot;yes&quot; ...
+##  $ activities: chr  &quot;no&quot; &quot;no&quot; &quot;no&quot; &quot;yes&quot; ...
+##  $ nursery   : chr  &quot;yes&quot; &quot;no&quot; &quot;yes&quot; &quot;yes&quot; ...
+##  $ higher    : chr  &quot;yes&quot; &quot;yes&quot; &quot;yes&quot; &quot;yes&quot; ...
+##  $ internet  : chr  &quot;no&quot; &quot;yes&quot; &quot;yes&quot; &quot;yes&quot; ...
+##  $ romantic  : chr  &quot;no&quot; &quot;no&quot; &quot;no&quot; &quot;yes&quot; ...
+##  $ famrel    : int  4 5 4 3 4 5 4 4 4 5 ...
+##  $ freetime  : int  3 3 3 2 3 4 4 1 2 5 ...
+##  $ goout     : int  4 3 2 2 2 2 4 4 2 1 ...
+##  $ Dalc      : int  1 1 2 1 1 1 1 1 1 1 ...
+##  $ Walc      : int  1 1 3 1 2 2 1 1 1 1 ...
+##  $ health    : int  3 3 3 5 5 5 3 1 1 5 ...
+##  $ failures  : int  0 0 2 0 0 0 0 0 0 0 ...
+##  $ paid      : chr  &quot;no&quot; &quot;no&quot; &quot;yes&quot; &quot;yes&quot; ...
+##  $ absences  : int  5 3 8 1 2 8 0 4 0 0 ...
+##  $ G1        : int  2 7 10 14 8 14 12 8 16 13 ...
+##  $ G2        : int  8 8 10 14 12 14 12 9 17 14 ...
+##  $ G3        : int  8 8 11 14 12 14 12 10 18 14 ...
+##  $ alc_use   : num  1 1 2.5 1 1.5 1.5 1 1 1 1 ...
+##  $ high_use  : logi  FALSE FALSE TRUE FALSE FALSE FALSE ...</code></pre>
+<pre class="r"><code>colnames(alc)</code></pre>
+<pre><code>##  [1] &quot;school&quot;     &quot;sex&quot;        &quot;age&quot;        &quot;address&quot;    &quot;famsize&quot;   
+##  [6] &quot;Pstatus&quot;    &quot;Medu&quot;       &quot;Fedu&quot;       &quot;Mjob&quot;       &quot;Fjob&quot;      
+## [11] &quot;reason&quot;     &quot;guardian&quot;   &quot;traveltime&quot; &quot;studytime&quot;  &quot;schoolsup&quot; 
+## [16] &quot;famsup&quot;     &quot;activities&quot; &quot;nursery&quot;    &quot;higher&quot;     &quot;internet&quot;  
+## [21] &quot;romantic&quot;   &quot;famrel&quot;     &quot;freetime&quot;   &quot;goout&quot;      &quot;Dalc&quot;      
+## [26] &quot;Walc&quot;       &quot;health&quot;     &quot;failures&quot;   &quot;paid&quot;       &quot;absences&quot;  
+## [31] &quot;G1&quot;         &quot;G2&quot;         &quot;G3&quot;         &quot;alc_use&quot;    &quot;high_use&quot;</code></pre>
+<ul>
+<li>The data set has 370 observations and 35 variables.
+<ul>
+<li>There are character, intgrer and logical variables in the data</li>
+<li>The variables give information on, e.g.. students background, school
+performance in maths and Portuguese (test scores ‘G1’, ‘G2’, and final
+grade ‘G3’) and alcohol consumption</li>
+</ul></li>
+<li>The students are between 15-22 years of age.</li>
+</ul>
+<p>The dependent binary variable ‘high_use’ is when the mean of ‘Dalc’
+and ‘Walc’ &gt; 2 * ‘Dalc’ - workday alcohol consumption numeric: from 1
+- very low to 5 - very high) * ‘Walc’ - weekend alcohol consumption
+(numeric: from 1 - very low to 5 - very high)</p>
+<p>In this analysis we will use logistic regression to test the
+relationship of four chosen background variables with the binary
+dependent variable ‘high_use’.</p>
+</div>
+<div id="choosing-the-variables" class="section level2">
+<h2>Choosing the variables</h2>
+<ul>
+<li>The variables:
+<ol style="list-style-type: decimal">
+<li>‘school’ student’s school (binary: ‘GP’ - Gabriel Pereira or ‘MS’ -
+Mousinho da Silveira)</li>
+<li>‘famrel’ quality of family relationships (numeric: from 1 - very bad
+to 5 - excellent)</li>
+<li>‘absences’ number of school absences (numeric: from 0 to 93)</li>
+<li>‘G3’ final grade (numeric: from 0 to 20, output target)</li>
+</ol></li>
+</ul>
+</div>
+<div id="hypothesis" class="section level2">
+<h2>Hypothesis:</h2>
+<p>The hypothesis for the variables:</p>
+<ul>
+<li>‘school’ is interesting to look at as it could affect the model if
+the two different schools have socioeconomically different student base.
+The hypothesis here would be that there is no effect</li>
+<li>‘famrel’ better family relationship would indicate less alcohol
+consumption, as maybe they teens would be then more inclined to spend
+time wiht their families which would include less drinking</li>
+<li>‘absences’ could have a positive correlation with the alcohol
+consumption.</li>
+<li>‘G3’ the final score could be negatively correlated with high
+use</li>
+</ul>
+</div>
+<div id="exploration-of-the-variable-distributions" class="section level2">
+<h2>Exploration of the variable distributions</h2>
+<p>To see any potential differences we use boxplots for the continuous
+variables ‘absences’ and ‘G3’.</p>
+<pre class="r"><code>library(ggplot2)</code></pre>
+<p>The tables are mainly useful for ‘school’ which is a binary variable,
+others get difficult to interpret</p>
+</div>
+<div id="statistical-analysis" class="section level2">
+<h2>Statistical analysis</h2>
 <p>(more chapters to be added similarly as we proceed with the
 course!)</p>
-</div>
 </div>
 </div>
 

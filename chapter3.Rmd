@@ -57,7 +57,6 @@ To see any potential differences we use boxplots for the continuous variables 'a
 ```{R}
 library(ggplot2)
 
-
 ```
 
 
