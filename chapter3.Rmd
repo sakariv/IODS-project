@@ -2,8 +2,9 @@
 
 ## Reading the joined data from the local folder
 
-```{R}
+```{r}
 # reading the data from a local folder
+
 library(readr)
 alc <- read.csv("data/joined_alc_data.csv")
 
@@ -14,7 +15,7 @@ Original data source: https://www.archive.ics.uci.edu/dataset/320/student+perfor
 
 The data consist of information on secondary education student performance in Portugal. The data is joined from two data sets 
 
-```{R}
+```{r}
 # Exploration of the data variables
 
 str(alc)
@@ -24,7 +25,7 @@ colnames(alc)
 
 * The data set has 370 observations and 35 variables. 
   + There are character, intgrer and logical variables in the data
-  + The variables give information on, e.g.. students background, school performance in maths and Portuguese (test scores 'G1', 'G2', and final grade 'G3') and alcohol consumption
+  + The variables give information on, e.g., students background, school performance in maths and Portuguese (test scores 'G1', 'G2', and final grade 'G3') and alcohol consumption
 * The students are between 15-22 years of age.
 
 The dependent binary variable 'high_use' is when the mean of 'Dalc' and 'Walc' > 2
@@ -38,36 +39,321 @@ In this analysis we will use logistic regression to test the relationship of fou
 * The variables:
   1. 'school' student's school (binary: 'GP' - Gabriel Pereira or 'MS' - Mousinho da Silveira) 
   2. 'famrel' quality of family relationships (numeric: from 1 - very bad to 5 - excellent)
-  3. 'absences' number of school absences (numeric: from 0 to 93)
+    + actually an ordinal variable, categories with a clear order
+  3. 'studytime' - weekly study time (numeric: 1 - <2 hours, 2 - 2 to 5 hours, 3 - 5 to 10 hours, or 4 - >10 hours)
+    + also an ordinal variable
   4. 'G3' final grade (numeric: from 0 to 20, output target)
 
 ## Hypothesis:
 
 The hypothesis for the variables: 
 
-* 'school' is interesting to look at as it could affect the model if the two different schools have socioeconomically different student base. The hypothesis here would be that there is no effect
-* 'famrel' better family relationship would indicate less alcohol consumption, as maybe they teens would be then more inclined to spend time wiht their families which would include less drinking
-* 'absences' could have a positive correlation with the alcohol consumption.
-* 'G3' the final score could be negatively correlated with high use
+* 'school' no effect, similar distributions. 
+  + The effect of school could still be there and affect the model so should be ruled out.
+* 'famrel' family relationship negatively correlated with high alcohol use 
+  + better family relationship -> more time spent with family -> less alcohol consumption?
+* 'studytime' could negatively correlate with high alcohol use - less time for drinking...
+* 'G3' better final score could be negatively correlated with high use
 
 ## Exploration of the variable distributions
 
-To see any potential differences we use boxplots for the continuous variables 'absences' and 'G3'.
+The distribution between the high and low alcohol use students:
 
-```{R}
-library(ggplot2)
+```{r}
+# Distribution of 'high_use' in the data set:
+table(alc$high_use)
+
+```
+There are over twice as many "low alcohol use" students than "high use" students in the data set.
+
+## The distributions of the variables:
+
+First, the variables 'famrel' and 'studytime' need to be changed to be categorical. 
+
+* (I think the variables should be ordinal so I used "ordered" function first, but that gave me some wonky results in the model that did not make sense to me... "factor" function seems to work better)
+
+* I also added labels, the labels 2-4 in 'famrel' are made up as I did not find the exact wording...
+
+
+```{r}
+# Changing 'famrel' into factors and adding labels
+alc$famrel <- factor(alc$famrel, labels = c(" very bad", " bad", " ok", " good", " excellent"))
+
+levels(alc$famrel)
+
+# Changing 'studytime' into factors and adding labels
+alc$studytime <- factor(alc$studytime, labels = c(" <2 hours", " 2 to 5 hours", " 5 to 10 hours", " >10 hours"))
+
+```
+
+Then we can see the overview of the chosen variables:
+
+```{r}
+
+# access the tidyverse libraries tidyr, dplyr, ggplot2
+library(tidyr); library(dplyr); library(ggplot2)
+
+# selecting the variables of interest
+filtered_alc <- alc %>% select(school, famrel, studytime, G3)
+
+# a bar plot of the variables
+gather(filtered_alc) %>% ggplot(aes(value)) + facet_wrap("key", scales = "free") + geom_bar()
+
+# summaries of the variables 
+summary(filtered_alc)
+
+# G3 looks very odd, lets make a separate plot for it...
+G3_test <- alc %>% select(G3)
+
+gather(G3_test) %>% ggplot(aes(value)) + facet_wrap("key", scales = "free") + geom_bar()
+# now it looks ok, go figure..
+
+```
+The variables on the plots are in a weird order and I cant fix that... Maybe it is the gather function
+
+However,
+
+* most students seem rather happy with their family relations as most have marked 'famrel' as 4 (good)
+* 'G3' roughly follows normal distribution, although skewed to the right
+  + I have no idea why the 'G3' plot looks like that in the gathered plot, the numbers are ordered very oddly, on its own it looks ok...
+* The MS school is a lot smaller than GP school ('school')
+* Most students appear to report studying of 2 to 5 hours ('studytime')
+
+Next, the distribution of each of the variables in relation to alcohol use:
+
+### School and alcohol
+
+* Barplots and crosstables to see whether the schools have different amounts of 'high_use' students:
+
+```{r}
+
+# initialize a plot of high_use
+g1 <- ggplot(data = alc, aes(x = high_use, col = school))
+
+# drawing the bar plot
+g1 + geom_bar(position = "dodge")
+
+# looking at a crosstable to see exact numbers:
+school_tab <- table(high_use = alc$high_use, alc$school)
+
+# a crostable using percentages:
+alc_with_percentages <- prop.table(school_tab, 2) * 100
+
+table(high_use = alc$high_use, alc$school)
+alc_with_percentages
+
+```
+
+GP (Gabriel Pereira) is a larger school (or had more respondents or participants in the survey) than MS (Mousinho da Silveira). MS had higher proportion of 'high_use', but the sample sizes are very different.
+
+### Family relations and high alcohol use
+
+Bar plots for values and then percentages:
+
+```{r}
+
+# Create the bar plot with values
+ggplot(alc, aes(x = famrel, fill = as.factor(high_use))) +
+  geom_bar(position = "dodge") +
+  labs(x = "famrel", y = "Count", fill = "high_use")
+
+# Calculate the percentages and counts for each category
+famrel_summary <- alc %>%
+  group_by(famrel, high_use) %>%
+  summarise(count = n()) %>%
+  mutate(perc = count / sum(count))
+
+# Create the bar plot with percentages and n
+ggplot(famrel_summary, aes(x = famrel, y = perc, fill = as.factor(high_use))) +
+  geom_bar(stat = "identity", position = "dodge") +
+  geom_text(aes(label = paste0(round(perc*100), "% (n = ", count, ")")), 
+            position = position_dodge(width = 1), vjust = -0.5) +
+  labs(x = "famrel", y = "Percentage", fill = "high_use") +
+  ylim(0, 1)
+
+```
+
+It would appear that proportion of high use decreases when the reported family relations improve. There does seem to be lower proportion of high alcohol use in students who reported extremely poor family relationships. However, there are very few students in the very poor 'famrel' category.
+
+The same data in a table form:
+
+```{r}
+# table with high alcohol use and family relations
+
+famrel_tab <- table(high_use = alc$high_use, alc$famrel)
+
+# adding percentages:
+
+famreltab_with_percentages <- prop.table(famrel_tab, 2) * 100
+
+table(high_use = alc$high_use, alc$famrel)
+famreltab_with_percentages
+
+```
+
+### Study time and alcohol use
+
+Bar plots for values and then percentages:
+
+```{r}
+
+# Create the bar plot with values
+ggplot(alc, aes(x = studytime, fill = as.factor(high_use))) +
+  geom_bar(position = "dodge") +
+  labs(x = "study time", y = "Count", fill = "high alcohol use")
+
+# Calculate the percentages and counts for each category
+studytime_summary <- alc %>%
+  group_by(studytime, high_use) %>%
+  summarise(count = n()) %>%
+  mutate(perc = count / sum(count))
+
+# Create the bar plot with percentages and n
+ggplot(studytime_summary, aes(x = studytime, y = perc, fill = as.factor(high_use))) +
+  geom_bar(stat = "identity", position = "dodge") +
+  geom_text(aes(label = paste0(round(perc*100), "% (n = ", count, ")")), 
+            position = position_dodge(width = 1), vjust = -0.5) +
+  labs(x = "study time", y = "Percentage", fill = "high_use") +
+  ylim(0, 1)
+
+```
+
+Based on the bar plot, it does seem that 'studytime' is indeed negatively correlated with 'high_use'
+
+The same data in a table form:
+
+```{r}
+# table with high alcohol use and study time
+
+studytime_tab <- table(high_use = alc$high_use, alc$studytime)
+
+# adding percentages:
+
+studytimetab_with_percentages <- prop.table(studytime_tab, 2) * 100
+
+table(high_use = alc$high_use, alc$studytime)
+studytimetab_with_percentages
 
 ```
 
 
-```{R}
+### Final test result (G3) and high alcohol use
+
+We create a boxplot for the to illustrate the potential relationship between final test results (numeric variable) and high alcohol use:
+
+```{r}
+
+# initialize a plot of high_use and G3
+g1 <- ggplot(alc, aes(x = high_use, y = G3))
+
+# define the plot as a boxplot and draw it
+g1 + geom_boxplot() + ylab("Final grade vs high alcohol use")
+
 
 ```
-The tables are mainly useful for 'school' which is a binary variable, others get difficult to interpret
 
-```{R}
-
-
-```
+There does not seem to be much of an effect of high alcohol use on final grade ('G3').
 
 ## Statistical analysis
+
+Creating the model with the chosen variables: 
+
+* 'school'
+* 'famrel'
+* 'studytime'
+* 'G3'
+
+Creating and printing the model:
+
+```{r}
+
+# find the model with glm()
+m <- glm(high_use ~ school + famrel + studytime + G3, data = alc, family = "binomial")
+
+# print out a summary of the model
+summary(m)
+
+# print out the coefficients of the model
+coef(m)
+```
+
+Based on the model:
+
+* The intercept is where all the explanatory variables are at zero.
+
+* The first category of the categorical variables 'famrel' and 'studytime' is used as a reference
+  + for example, the estimate of 'famrel bad' tells about the difference between it and the reference category 'famrel very bad'
+  
+* The estimates line up with the graphs presented above, for example, famrel: 
+  + famrel bad: 0.96006 -> increase from reference
+  + famrel ok: 0.58415 -> decrease from reference
+  + famrel good: 0.21688 -> decrease from reference
+  + famrel excellent: -0.12296 -> decrease from reference
+
+* 'school' is not significantly correlated with high alcohol use
+* 'famrel' is not significantly correlated with alcohol use, even though it looked like it could be based on the distributions
+* 'studytime' is significantly correlated with alcohol use
+  + The difference is very high between the categories "2 to 5 hours" and "5 to 10 hours"
+* final score ('G3') is not significantly correlated with the high alcohol use
+
+The calculation of the odds ratios:
+
+```{r}
+
+# compute odds ratios (OR)
+OR <- coef(m) %>% exp
+
+# compute confidence intervals (CI)
+CI <- confint(m) %>% exp
+
+# print out the odds ratios with their confidence intervals
+cbind(OR, CI)
+
+```
+
+* With 'famrel' the lack of significance could be because the reference category 'famrel very bad' had only a few students in it and is not reliable... 
+
+* The only confidence intervals that do not include 1 are 'studytime 5 to 10 hours' and 'studytime >10 hours'.
+  + 'studytime' is significantly correlated with 'high_use', this is consistent with the significance values in the previous table
+
+* Based on the odds ratios, for example, for students in 'studytime > 10 hours' category have 0.26 times lower odds to be in the high_use category as those with 'studytime < 2 hours' 
+
+## The predictive power of the model
+
+* only 'studytime' was a significant variable, so that is left to model as the sole explanatory variable:
+
+```{r}
+
+# fit the model
+m_studytime <- glm(high_use ~ studytime, data = alc, family = "binomial")
+
+# predict() the probability of high_use
+probabilities <- predict(m, type = "response")
+
+library(dplyr)
+# add the predicted probabilities to 'alc'
+alc <- mutate(alc, probability = probabilities)
+
+# use the probabilities to make a prediction of high_use
+alc <- mutate(alc, prediction = c(probability > 0.5))
+
+# see the last ten original classes, predicted probabilities, and class predictions
+select(alc, studytime, high_use, probability, prediction) %>% tail(10)
+
+# tabulate the target variable versus the predictions
+table(high_use = alc$high_use, alc$prediction)
+```
+
+Based on the matrix the model provided:
+
+* 246 true negatives
+* 11 true positives
+* 13 false positives
+* 100 false negatives
+
+The model does not seem to predict very well. It highly underestimates the high alcohol use, giving high number of false negatives.
+
+The guessing (hypothesises) were in line with the distributions of the variables in high and low use categories. However, the model does not indicate that 'famrel' is significantly correlated with high alcohol use. 'school' and 'G3' did not indicate a large effect at any point of data exploration.
+
+
+
