@@ -2,13 +2,13 @@
 
 ## Loading the "Boston" data
 
-The "Boston" dataset is derived from U.S. census information concerning housing in the suburbs of Boston Massachusetts. It is included in the 'MASS' library in R.
+The "Boston" dataset is derived from U.S. census information on housing values in the suburbs of Boston Massachusetts. It is included in the 'MASS' library in R.
 
 ```{r}
 # access the MASS package which has the data
 library(MASS)
 
-# load the data
+# loading the data
 data("Boston")
 
 # exploring the data
@@ -16,7 +16,7 @@ str(Boston)
 
 ```
 
-* The "Boston" dataset contains 506 observations and 14 continuous variables. 
+* The "Boston" dataset contains 506 observations (suburbs or towns) and 14 continuous numerical variables. 
 
 * The variables (based on information at "https://stat.ethz.ch/R-manual/R-devel/library/MASS/html/Boston.html"):
   + 'crim' per capita crime rate by town.
@@ -33,12 +33,61 @@ str(Boston)
   + 'black' 1000(Bk−0.63)^2^ where Bk is the proportion of blacks by town.
   + 'lstat' lower status of the population (percent).
   + 'medv' median value of owner-occupied homes in $1000s.
-  
+
+In this assignment we will focus on the crime rate ('crim') as the dependent variable.
+
 ## Graphical overview of the data
 
-The dataset has quite many variables so visualization with 'plot' or 'pairs' functions makes it difficult to read
+Summaries to explore the variables: 
 
-First we visualize the potential correlations between the variables in the dataset:
+```{r}
+# summaries of the variables
+summary(Boston)
+```
+
+Histograms to visualize the distributions of the different variables:
+
+```{r}
+# Loading the library
+library(ggplot2)
+
+# Create a list of variable names
+variables <- names(Boston)
+
+# Loop through the variables and create a histogram for each one
+for (var in variables) {
+  # Create the histogram
+  p <- ggplot(Boston, aes_string(x = var)) + 
+    geom_histogram(binwidth = 1) +
+    labs(x = var, y = "Frequency", title = paste("Histogram of", var))
+  
+  # Print the histogram
+  print(p)
+}
+
+# separate histogram for 'nox' as it is very poorly visualized with binwith of 1
+ ggplot(Boston, aes(x = nox)) + 
+    geom_histogram(binwidth = 0.1) +
+    labs(x = var, y = "Frequency", title = paste("Histogram of nox binwidth 0.1"))
+
+
+```
+
+Some general observations on variable distributions: 
+
+* The binwith 1 is probably not optimal for visualizing all of the variables but at least it shows something about every variable.
+  + for nox a separate histogram with binwidth of 0.1
+* The variables vary quite a bit regardign min/max and their distributions, very few are normally distributed (maybe only 'rm')
+* 'chas' is a binary dummy variable
+
+Some observations about individual variables:
+
+* 'crim': Based on the histogram, most of the boroughs/ towns have a low crime rate, with a few with a very high crime rate. This is also reflected by the median being a lot lower than the mean.
+* 'zn': most of the boroughs/towns have no residential land zoned for lots over 25,000 sq.ft.
+* 'age': based on the data, there are a lot of districts, where all of the owner-occupied units were built before 1940.
+
+
+The correlations between the variables can be visualized using corrplot function:
 
 ```{r}
 # Graphical overview of the correlations in the data
@@ -57,24 +106,21 @@ corrplot(cor_matrix, method="square")
 
 Some observations based on the correlation matrix:
 
-* crime rate ('crim') is positively correlated with 'rad' and 'tax'
+Our dependent variable 'crim' (per capita crime rate by town):
+* crime rate ('crim') is positively highly correlated with 'rad' and 'tax'
   + higher property taxes are positively correlated with higher crime rate, meaning city centers? Positive correlation with distance from radial highways would also point to that.
-  + 'tax' and 'rad' are also highly correlated with each other
-* proportion of residential land zoned for lots over 25,000 sq.ft.('zn') is negatively correlated with 
-  + nonresidential
-  + nitrogen gas emissions
-  + age
+  + 'tax' and 'rad' are also highly correlated with each other, so they might not be directly related to 'crim', but could be properties of city centres
+
+Observations on some other variables:
+
+* nitrogen gas emissions ('nox') are positively correlated with 'ind' (non-retail businesses) which makes sense
+* 'nox' is also correlated with 'tax', caused by car emissions in city centre??
+  + 'nox' also negatively correlated with 'dis' (distance from employment centres) 
+* 'age' is negatively correlated with 'dis' so newer houses in the suburbs?
   
-Elaborate later on this....
-
-```{r}
 
 
-
-```
-
-Standardize the dataset and print out summaries of the scaled data. How did the variables change? Create a categorical variable of the crime rate in the Boston dataset (from the scaled crime rate). Use the quantiles as the break points in the categorical variable. Drop the old crime rate variable from the dataset. Divide the dataset to train and test sets, so that 80% of the data belongs to the train set. (0-2 points)
-
+Create a categorical variable of the crime rate in the Boston dataset (from the scaled crime rate). Use the quantiles as the break points in the categorical variable. Drop the old crime rate variable from the dataset. Divide the dataset to train and test sets, so that 80% of the data belongs to the train set. (0-2 points)
 ## Standardizing and scaling the variables
 
 The dataset is scaled using 'scale' function
@@ -99,10 +145,10 @@ Scaling changed the data from original values to a z-score. The z-score describe
 
 ## Creating a categorical variable for crime rate
 
-We change the 'crim' to a categorical by breaking it into quantiles
+We change the 'crim' to a categorical by breaking it into quantiles: 
 
 ```{r}
-# Changing the dataset into a data frame:
+# Transforming the dataset into a data frame:
 boston_scaled <- as.data.frame(scale(Boston))
 boston_scaled$crim <- as.numeric(boston_scaled$crim)
 
@@ -113,17 +159,21 @@ bins
 # create a categorical variable 'crime'
 crime <- cut(boston_scaled$crim, breaks = bins, include.lowest = TRUE, labels = c("low", "med_low", "med_high", "high"))
 
-# remove original crim from the dataset
+# remove original 'crim' from the dataset
 boston_scaled <- dplyr::select(boston_scaled, -crim)
 
 # add the new categorical value to scaled data
 boston_scaled <- data.frame(boston_scaled, crime)
 
+# checking if the 'crim' is out and 'crime' is in
+colnames(boston_scaled)
+
+# seems ok
 ```
 
-## Dividing the dataseto
+## Dividing the dataset into train and test sets
 
-For training and testing the classifier later, we divide the data into train (80%) and test (20%) datasets
+For training and testing the classifier later, we divide the data into train (80%) and test (20%) datasets:
 
 ```{r}
 
@@ -146,7 +196,7 @@ correct_classes <- test$crime
 
 ## Fitting the linear discriminatn analysis
 
-We fit the linear discriminatn analysis on the training set with 'crime' as the categorical target variable. All the other variables are used as predictors.
+We fit the linear discriminant analysis on the training set with 'crime' as the categorical target variable. All the other variables are used as predictors:
 
 ```{r}
 
@@ -175,10 +225,10 @@ lda.arrows(lda.fit, myscale = 1)
 
 ```
 
+
 ## Predicting the classes with the model
 
-Save the crime categories from the test set and then remove the categorical crime variable from the test dataset. Then predict the classes with the LDA model on the test data. Cross tabulate the results with the crime categories from the test set. Comment on the results. (0-3 points)
-
+We use the LDA model to predict 'crime' in the test data set:
 
 ```{r}
 
@@ -191,7 +241,7 @@ test <- dplyr::select(test, -crime)
 # predict classes with test data
 lda.pred <- predict(lda.fit, newdata = test)
 
-# Create the crosstabulation
+# Create the crosstabs
 prediction_tab <- table(correct = correct_classes, predicted = lda.pred$class)
 
 # Calculate the row-wise percentages
@@ -204,7 +254,7 @@ row_percentages
 
 ```
 
-The model seems to be able to predict the test data rather well. I does the best with 'high' category with 100% accuracy and the worst with medium high category (50%). The misses seem to be "clustered" around the correct category.
+The model seems to be able to predict to which of the four crime rate categories the data points fall in the test data rather well. I does the best with 'high' category with 100% accuracy and the worst with medium high category (50%). 
 
 ## Distance measures with k-means analysis 
 
@@ -237,13 +287,21 @@ km <- kmeans(boston_scaled, centers = 3)
 pairs(boston_scaled[c("rm", "age", "dis", "crim")], col = km$cluster)
 
 ```
-In Exercise 4, the nonscaled 'Boston' data was used. In comparison to the exercise set, scaling the data did not change the outlook of the plots. it did change the scale to z-scores, representing how many standard deviations the mean.
+In Exercise 4, the nonscaled 'Boston' data was used. In comparison to the exercise set, scaling the data did not change the outlook of the plots. it did change the scale to z-scores, representing how many standard deviations the observations are from the mean.
+
+
 
 ## The optimal number of clusters
+
+An attempt on the first bonus task..:
 
 
 ```{r}
 library(ggplot2)
+load(Boston)
+
+#scaling the data
+boston_bonus <- scale(Boston)
 
 # determine the number of clusters
 k_max <- 10
