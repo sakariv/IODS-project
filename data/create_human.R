@@ -1,5 +1,5 @@
 # Sakari Välimäki 23112023
-# Data for assignment 5
+# Data for assignment 5 (week 4)
 
 # reading the data from the internet
 library(readr)
@@ -79,4 +79,53 @@ dim(human)
 summary(human)
 
 #writing the data 
+write.csv(human, "human.csv")
+
+
+
+# Data wrangling continued (Week 5)
+# Sakari Välimäki 01122023
+# original data: https://raw.githubusercontent.com/KimmoVehkalahti/Helsinki-Open-Data-Science/master/datasets/human1.csv
+
+# Reading the data again
+library(readr)
+human <- read_csv("https://raw.githubusercontent.com/KimmoVehkalahti/Helsinki-Open-Data-Science/master/datasets/human1.csv")
+
+# Exploring the data 
+
+str(human)
+dim(human)
+summary(human)
+
+# The dataset human is combined from two UN human development index data for different countries: Human Development Index (HDI) and Gender Inequality index (GII). 
+# The joint dataset contains only the countries that are present in the both HDI and GII datasets
+# The joint dataset has two new variables: 
+##'Edu2.FM', which is the female population with secondary education (%) / male population with secondary education (%)
+##'Labo.FM', which is the female population workforce participation (%) / male population workforce participation (%)
+
+# Selecting the variables
+library(dplyr)
+keep <- c("Country", "Edu2.FM", "Labo.FM", "Life.Exp", "Edu.Exp", "GNI", "Mat.Mor", "Ado.Birth", "Parli.F")
+
+# select the 'keep' columns
+human <- select(human, one_of(keep))
+
+# removing rows with missing values
+human <- filter(human, complete.cases(human))
+
+# looking at the tail end of the data
+tail(human, 10)
+
+# removing the 7 last rows that relate to regions instead of countries
+last <- nrow(human) - 7
+human <- human[1:last, ]
+
+# confirming that they are removed
+tail(human, 10)
+
+# checking that the data has 155 obs. and 9 var.
+dim(human)
+# seems ok!
+
+# rewriting the file
 write.csv(human, "human.csv")
